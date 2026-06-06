@@ -1,31 +1,40 @@
 import os
-import asyncio
-from aiogram import Bot, Dispatcher, types
+import requests
 from deep_translator import GoogleTranslator
 
 TOKEN = os.getenv("BOT_TOKEN")
+URL = f"https://api.telegram.org/bot{TOKEN}"
 
-bot = Bot(token=TOKEN)
-dp = Dispatcher()
+offset = 0
 
-@dp.message()
-async def translate(message: types.Message):
-    if not message.text:
-        return
+def get_updates():
+    global offset
+    r = requests.get(f"{URL}/getUpdates", params={"offset": offset}).json()
+    return r.get("result", [])
 
-    try:
-        translated = GoogleTranslator(
-            source="auto",
-            target="en"
-        ).translate(message.text)
+def send_message(chat_id, text):
+    requests.post(f"{URL}/sendMessage", data={
+        "chat_id": chat_id,
+        "text": text
+    })
 
-        await message.answer(f"🌐 {translated}")
-    except Exception as e:
-        await message.answer(f"Error: {e}")
+print("Bot running...")
 
-async def main():
-    print("Bot running...")
-    await dp.start_polling(bot)
+while True:
+    updates = get_updates()
 
-if __name__ == "__main__":
-    asyncio.run(main())
+    for update in updates:
+        offset = update["update_id"] + 1
+
+        message = update.get("message")
+        if not message or "text" not in message:
+            continue
+
+        text = message["text"]
+        chat_id = message["chat"]["id"]
+
+        try:
+            translated = GoogleTranslator(source="auto", target="en").translate(text)
+            send_message(chat_id, f"🌐 {translated}")
+        except Exception as e:
+            send_message(chat_id, f"Error: {e}")
