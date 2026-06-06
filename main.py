@@ -10,8 +10,8 @@ async def translate(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     try:
-        translated = GoogleTranslator(source="auto", target="en").translate(update.message.text)
-        await update.message.reply_text(f"🌐 {translated}")
+        result = GoogleTranslator(source="auto", target="en").translate(update.message.text)
+        await update.message.reply_text(f"🌐 {result}")
     except Exception as e:
         await update.message.reply_text(f"Error: {e}")
 
@@ -23,6 +23,7 @@ def main():
     print("Bot running...")
 
     app = Application.builder().token(TOKEN).build()
+
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, translate))
 
     app.run_polling()
