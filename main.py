@@ -55,18 +55,23 @@ def bot_loop():
     while True:
         updates = get_updates()
 
+        print("Updates received:", len(updates))  # DEBUG LINE
+
         for update in updates:
+            print("RAW UPDATE:", update)  # DEBUG LINE
+
             offset = update["update_id"] + 1
 
             message = update.get("message")
-            if not message or "text" not in message:
+            if not message:
                 continue
 
-            text = message["text"]
+            text = message.get("text")
             chat_id = message["chat"]["id"]
 
+            print("Message:", text)  # DEBUG LINE
+
             try:
-                # Skip English messages (no spam)
                 if is_english(text):
                     continue
 
