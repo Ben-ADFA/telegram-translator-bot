@@ -38,27 +38,21 @@ def send_message(chat_id, text):
         print("send_message error:", e)
 
 def is_english(text):
-    """
-    Simple and stable language filter:
-    If text is mostly ASCII → assume English
-    """
-    try:
-        return all(ord(c) < 128 for c in text)
-    except:
-        return False
+    return all(ord(c) < 128 for c in text)
 
 def bot_loop():
     global offset
 
-    print("Bot started...")
+    print("🚀 BOT LOOP STARTED")  # IMPORTANT DEBUG
 
     while True:
         updates = get_updates()
 
-        print("Updates received:", len(updates))  # DEBUG LINE
+        if updates:
+            print("Updates:", len(updates))
 
         for update in updates:
-            print("RAW UPDATE:", update)  # DEBUG LINE
+            print("RAW:", update)
 
             offset = update["update_id"] + 1
 
@@ -69,7 +63,7 @@ def bot_loop():
             text = message.get("text")
             chat_id = message["chat"]["id"]
 
-            print("Message:", text)  # DEBUG LINE
+            print("TEXT:", text)
 
             try:
                 if is_english(text):
@@ -87,9 +81,15 @@ def bot_loop():
 
         time.sleep(1)
 
-# Start bot in background thread
-threading.Thread(target=bot_loop, daemon=True).start()
+def start_bot():
+    print("Starting bot thread...")
+    bot_loop()
 
-# Start Flask server (required for Render)
-port = int(os.environ.get("PORT", 10000))
-app.run(host="0.0.0.0", port=port)
+if __name__ == "__main__":
+    # Start bot FIRST in background
+    threading.Thread(target=start_bot, daemon=True).start()
+
+    # Then start Flask
+    port = int(os.environ.get("PORT", 10000))
+    print("Starting Flask...")
+    app.run(host="0.0.0.0", port=port)
