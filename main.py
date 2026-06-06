@@ -1,12 +1,20 @@
 import os
 import time
+import threading
 import requests
+from flask import Flask
 from deep_translator import GoogleTranslator
 
 TOKEN = os.getenv("BOT_TOKEN")
 BASE_URL = f"https://api.telegram.org/bot{TOKEN}"
 
 offset = 0
+
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return "Bot is running"
 
 def get_updates():
     global offset
@@ -29,30 +37,40 @@ def send_message(chat_id, text):
     except Exception as e:
         print("send_message error:", e)
 
-print("Bot running...")
+def bot_loop():
+    global offset
 
-while True:
-    updates = get_updates()
+    print("Bot started...")
 
-    for update in updates:
-        offset = update["update_id"] + 1
+    while True:
+        updates = get_updates()
 
-        message = update.get("message")
-        if not message or "text" not in message:
-            continue
+        for update in updates:
+            offset = update["update_id"] + 1
 
-        text = message["text"]
-        chat_id = message["chat"]["id"]
+            message = update.get("message")
+            if not message or "text" not in message:
+                continue
 
-        try:
-            translated = GoogleTranslator(
-                source="auto",
-                target="en"
-            ).translate(text)
+            text = message["text"]
+            chat_id = message["chat"]["id"]
 
-            send_message(chat_id, f"🌐 {translated}")
+            try:
+                translated = GoogleTranslator(
+                    source="auto",
+                    target="en"
+                ).translate(text)
 
-        except Exception as e:
-            send_message(chat_id, f"Error: {e}")
+                send_message(chat_id, f"🌐 {translated}")
 
-    time.sleep(1)
+            except Exception as e:
+                send_message(chat_id, f"Error: {e}")
+
+        time.sleep(1)
+
+# Start bot in background
+threading.Thread(target=bot_loop, daemon=True).start()
+
+# Start web server (THIS is what Render needs)
+port = int(os.environ.get("PORT", 10000))
+app.run(host="0.0.0.0", port=port)
