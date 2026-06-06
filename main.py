@@ -37,6 +37,16 @@ def send_message(chat_id, text):
     except Exception as e:
         print("send_message error:", e)
 
+def is_english(text):
+    """
+    Simple and stable language filter:
+    If text is mostly ASCII → assume English
+    """
+    try:
+        return all(ord(c) < 128 for c in text)
+    except:
+        return False
+
 def bot_loop():
     global offset
 
@@ -56,11 +66,8 @@ def bot_loop():
             chat_id = message["chat"]["id"]
 
             try:
-                # detect language
-                detected_lang = GoogleTranslator(source="auto", target="en").detect(text)
-
-                # ONLY translate if NOT English
-                if detected_lang == "en":
+                # Skip English messages (no spam)
+                if is_english(text):
                     continue
 
                 translated = GoogleTranslator(
@@ -71,13 +78,13 @@ def bot_loop():
                 send_message(chat_id, f"🌐 {translated}")
 
             except Exception as e:
-                print("Error:", e)
+                print("Translation error:", e)
 
         time.sleep(1)
 
-# Start bot in background
+# Start bot in background thread
 threading.Thread(target=bot_loop, daemon=True).start()
 
-# Start web server (THIS is what Render needs)
+# Start Flask server (required for Render)
 port = int(os.environ.get("PORT", 10000))
 app.run(host="0.0.0.0", port=port)
