@@ -67,11 +67,15 @@ def bot_loop():
 
             try:
                 translated = GoogleTranslator(
-                    source="auto",
-                    target="en"
-                ).translate(text)
+    source="auto",
+    target="en"
+).translate(text)
 
-                send_message(chat_id, f"🌐 {translated}")
+# avoid spam: don't reply if translation is identical
+if translated.strip().lower() == text.strip().lower():
+    continue
+
+send_message(chat_id, f"🌐 {translated}")
 
             except Exception as e:
                 print("Translation error:", e)
