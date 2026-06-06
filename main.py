@@ -56,16 +56,22 @@ def bot_loop():
             chat_id = message["chat"]["id"]
 
             try:
-                translated = GoogleTranslator(
-                    source="auto",
-                    target="en"
-                ).translate(text)
+                translated = GoogleTranslator(source="auto", target="en").translate(text)
+
+                # IMPORTANT DEBUG LINE
+                print("Original:", text)
+                print("Translated:", translated)
+
+                # safety check: avoid echo bug
+                if not translated or translated.strip() == "":
+                    translated = "(translation failed)"
 
                 send_message(chat_id, f"🌐 {translated}")
 
             except Exception as e:
-                send_message(chat_id, f"Error: {e}")
-
+                print("Translation error:", e)
+                send_message(chat_id, "Translation error")
+        
         time.sleep(1)
 
 # Start bot in background
