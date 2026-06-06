@@ -37,22 +37,19 @@ def send_message(chat_id, text):
     except Exception as e:
         print("send_message error:", e)
 
-def is_english(text):
-    return all(ord(c) < 128 for c in text)
-
 def bot_loop():
     global offset
 
-    print("🚀 BOT LOOP STARTED")  # IMPORTANT DEBUG
+    print("🚀 BOT LOOP STARTED")
 
     while True:
         updates = get_updates()
 
         if updates:
-            print("Updates:", len(updates))
+            print("Updates received:", len(updates))
 
         for update in updates:
-            print("RAW:", update)
+            print("RAW UPDATE:", update)
 
             offset = update["update_id"] + 1
 
@@ -63,12 +60,12 @@ def bot_loop():
             text = message.get("text")
             chat_id = message["chat"]["id"]
 
+            if not text:
+                continue
+
             print("TEXT:", text)
 
             try:
-                if is_english(text):
-                    continue
-
                 translated = GoogleTranslator(
                     source="auto",
                     target="en"
@@ -82,14 +79,13 @@ def bot_loop():
         time.sleep(1)
 
 def start_bot():
-    print("Starting bot thread...")
     bot_loop()
 
 if __name__ == "__main__":
-    # Start bot FIRST in background
+    # Start bot in background thread
     threading.Thread(target=start_bot, daemon=True).start()
 
-    # Then start Flask
+    # Start Flask (required for Render)
     port = int(os.environ.get("PORT", 10000))
-    print("Starting Flask...")
+    print("Starting Flask on port", port)
     app.run(host="0.0.0.0", port=port)
